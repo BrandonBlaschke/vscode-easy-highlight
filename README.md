@@ -1,4 +1,4 @@
-# easy-highlight README
+# Easy Highlight README
 
 This is the README for your extension "easy-highlight". After writing up a brief description, we recommend including the following sections.
 
