@@ -7,7 +7,6 @@ import * as vscode from 'vscode';
 let activeEditor: vscode.TextEditor | undefined = undefined;
 const defaultColor = '#fdff322f';
 
-// TODO: File keys shouldn't be based on URI incase files change location
 // Editors that have been marked
 const markedEditors = new Map<string, Map<string, {ranges: vscode.Range[], decoration: vscode.TextEditorDecorationType}>>();
 
@@ -35,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		// Get values from user
-		const uri = activeEditor.document.uri.toString();
+		const path = activeEditor.document.uri.path.toString();
 		let start = activeEditor.selection.start;
 		let end = activeEditor.selection.end;
 
@@ -47,11 +46,11 @@ export function activate(context: vscode.ExtensionContext) {
 		// Create range key
 		const rangeKey = `${start.line}${start.character}${end.line}${end.character}`;
 
-		if (!markedEditors.has(uri)) {
-			markedEditors.set(uri, new Map<string, {ranges: vscode.Range[], decoration: vscode.TextEditorDecorationType}>());
+		if (!markedEditors.has(path)) {
+			markedEditors.set(path, new Map<string, {ranges: vscode.Range[], decoration: vscode.TextEditorDecorationType}>());
 		}
 
-		const rangeMap = markedEditors.get(uri)!;
+		const rangeMap = markedEditors.get(path)!;
 
 		const decoration = vscode.window.createTextEditorDecorationType({
 			backgroundColor: defaultColor,
@@ -79,7 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// 	return;
 		// }
 
-		// const uri = activeEditor.document.uri.toString();
+		// const path = activeEditor.document.uri.path.toString();
 		// let start = activeEditor.selection.start;
 		// let end = activeEditor.selection.end;
 
@@ -88,10 +87,10 @@ export function activate(context: vscode.ExtensionContext) {
 		// let endPos = new vscode.Position(end.line, end.character);
 		// let range = new vscode.Range(startPos, endPos);
 
-		// if (markedEditors.has(uri)) {
-		// 	markedEditors.get(uri)?.push(range);
+		// if (markedEditors.has(path)) {
+		// 	markedEditors.get(path)?.push(range);
 		// } else {
-		// 	markedEditors.set(uri, [range]);
+		// 	markedEditors.set(path, [range]);
 		// }
 
 		// updateDecorations(noHighlightDecorator);
@@ -105,13 +104,13 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		const uri = activeEditor.document.uri.toString();
+		const path = activeEditor.document.uri.path.toString();
 
-		if (!markedEditors.has(uri)) {
+		if (!markedEditors.has(path)) {
 			return; 
 		}
 
-		markedEditors.get(uri)?.forEach((val, key) => {
+		markedEditors.get(path)?.forEach((val, key) => {
 			val.decoration.dispose();
 			val.ranges = [];
 		});
@@ -120,12 +119,12 @@ export function activate(context: vscode.ExtensionContext) {
 	// Updates Decorations on current ActiveEditor
 	let updateDecorations = (activeEditor: vscode.TextEditor) => {
 
-		const uri = activeEditor.document.uri.toString();
-		if (!markedEditors.has(uri)) {
+		const path = activeEditor.document.uri.path.toString();
+		if (!markedEditors.has(path)) {
 			return;
 		}
 
-		markedEditors.get(uri)?.forEach((val, key) => {
+		markedEditors.get(path)?.forEach((val, key) => {
 			activeEditor.setDecorations(val.decoration!, val.ranges!);
 		});
 	};
@@ -143,6 +142,18 @@ export function activate(context: vscode.ExtensionContext) {
 		if (activeEditor && event.document === activeEditor.document) {
 			updateDecorations(activeEditor);
 		}
+	}, null, context.subscriptions);
+
+	// If file name changes update key for markedEditors
+	vscode.workspace.onWillRenameFiles((event) => {
+		event.files.forEach((files) => {
+			const oldPath = files.oldUri.path.toString();
+			if (markedEditors.has(oldPath)) {
+				const highlights = markedEditors.get(oldPath)!;
+				markedEditors.delete(oldPath);
+				markedEditors.set(files.newUri.path.toString(), highlights);
+			}
+		});
 	}, null, context.subscriptions);
 
 	context.subscriptions.push(disposable);
