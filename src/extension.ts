@@ -73,25 +73,28 @@ export function activate(context: vscode.ExtensionContext) {
 		console.log('Remove Highlight');
 
 		// Get current text editor that is open and their selection
-		// activeEditor = vscode.window.activeTextEditor;
-		// if (!activeEditor) {
-		// 	return;
-		// }
+		activeEditor = vscode.window.activeTextEditor;
+		if (!activeEditor) {
+			return;
+		}
 
-		// const path = activeEditor.document.uri.path.toString();
-		// let start = activeEditor.selection.start;
-		// let end = activeEditor.selection.end;
+		const path = activeEditor.document.uri.path.toString();
+		let start = activeEditor.selection.start;
+		let end = activeEditor.selection.end;
 
 		// // Create range
-		// let startPos = new vscode.Position(start.line, start.character);
-		// let endPos = new vscode.Position(end.line, end.character);
-		// let range = new vscode.Range(startPos, endPos);
+		let startPos = new vscode.Position(start.line, start.character);
+		let endPos = new vscode.Position(end.line, end.character);
+		let range = new vscode.Range(startPos, endPos);
 
-		// if (markedEditors.has(path)) {
-		// 	markedEditors.get(path)?.push(range);
-		// } else {
-		// 	markedEditors.set(path, [range]);
-		// }
+		// Create range key
+		const rangeKey = `${start.line}${start.character}${end.line}${end.character}`;
+
+		if (markedEditors.has(path) && markedEditors.get(path)?.has(rangeKey)) {
+			// If ranges match remove highlight
+			markedEditors.get(path)?.get(rangeKey)?.decoration.dispose();
+			markedEditors.get(path)?.delete(rangeKey);
+		}
 
 		// updateDecorations(noHighlightDecorator);
 	});
@@ -129,7 +132,7 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	};
 
-	// When editor switches udpate activeEditor and udpate decorations.
+	// When editor switches update activeEditor and update decorations.
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		activeEditor = editor;
 		if (editor) {
