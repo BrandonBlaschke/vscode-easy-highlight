@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as utils from './utils';
 
 // TODO: Remove all console.log statements
 
@@ -44,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
 		let range = new vscode.Range(startPos, endPos);
 		
 		// Create range key
-		const rangeKey = `${start.line}${start.character}${end.line}${end.character}`;
+		const rangeKey = utils.generateRangeKey(startPos, endPos);
 
 		if (!markedEditors.has(path)) {
 			markedEditors.set(path, new Map<string, {ranges: vscode.Range[], decoration: vscode.TextEditorDecorationType}>());
@@ -82,21 +83,61 @@ export function activate(context: vscode.ExtensionContext) {
 		let start = activeEditor.selection.start;
 		let end = activeEditor.selection.end;
 
-		// // Create range
+		// Get Positions
 		let startPos = new vscode.Position(start.line, start.character);
 		let endPos = new vscode.Position(end.line, end.character);
-		let range = new vscode.Range(startPos, endPos);
 
 		// Create range key
-		const rangeKey = `${start.line}${start.character}${end.line}${end.character}`;
+		const rangeKey = utils.generateRangeKey(startPos, endPos);
 
+		// If ranges match remove highlight
 		if (markedEditors.has(path) && markedEditors.get(path)?.has(rangeKey)) {
-			// If ranges match remove highlight
 			markedEditors.get(path)?.get(rangeKey)?.decoration.dispose();
 			markedEditors.get(path)?.delete(rangeKey);
+			return;
 		}
 
-		// updateDecorations(noHighlightDecorator);
+		let keys = Array.from(markedEditors.get(path)?.keys()!);
+
+		keys.forEach((key) => {
+			
+			let oldRange = markedEditors.get(path)?.get(key)?.ranges[0];
+			let oldDecor = markedEditors.get(path)?.get(key)?.decoration!;
+
+			if (oldRange) {
+				let oldKey = utils.generateRangeKey(oldRange.start, oldRange.end);
+				let newRanges = utils.modifyRange(startPos, endPos, oldRange, oldDecor);
+
+				if (newRanges === undefined) {
+					return;
+				}
+
+				let newRange1 = newRanges?.newRange1;
+				let newRange2 = newRanges?.newRange2;
+				
+				// If new range(s) created update map with new key and remove old range
+				if (newRange1) {
+					// TODO: Make it decoration be the same color as was before.
+					const decoration = vscode.window.createTextEditorDecorationType({
+						backgroundColor: defaultColor,
+					});
+					markedEditors.get(path)?.delete(oldKey);
+					oldDecor.dispose();
+					let newKey = utils.generateRangeKey(newRange1.start, newRange1.end);
+					markedEditors.get(path)?.set(newKey, {ranges: [newRange1], decoration});
+				}
+
+				if (newRange2) {
+					const decoration = vscode.window.createTextEditorDecorationType({
+						backgroundColor: defaultColor,
+					});
+					let newKey = utils.generateRangeKey(newRange2.start, newRange2.end);
+					markedEditors.get(path)?.set(newKey, {ranges: [newRange2], decoration});
+				}
+			}
+		});
+
+		updateDecorations(activeEditor);
 	});
 
 	// Disposes of all highlights on a single text editor
