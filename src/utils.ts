@@ -6,7 +6,7 @@ export let generateRangeKey = (startPosition: vscode.Position, endPosition: vsco
 };
 
 // Checks if position if below, in, or above range.
-export let posToRange = (position: vscode.Position, range: vscode.Range): number => {
+let posToRange = (position: vscode.Position, range: vscode.Range): number => {
 
     // Check if below
     if (position.line < range.start.line) {
@@ -68,3 +68,62 @@ export let modifyRange = (
     return {newRange1: range, newRange2: undefined};
 };
 
+// Records all highlights done to files in a workspace.
+export class Recorder {
+    files: {
+        [file: string]: {
+            [range: string]: Highlight
+        }
+    };
+
+    constructor() {
+        this.files = {};
+    }
+
+    public hasFile(filePath: string): boolean {
+        return undefined !== this.files[filePath];
+    }
+
+    public setFile(filePath: string, obj: any) {
+        this.files[filePath] = obj;
+    }
+
+    public getFileRanges(filePath: string): {[range: string]: Highlight} {
+        return this.files[filePath];
+    }
+
+    public hasFileRange(filePath: string, rangeKey: string): boolean {
+        if (this.files[filePath]) {
+            if (this.files[filePath][rangeKey]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public getFileRange(filePath: string, rangeKey: string): Highlight | undefined {
+        if (this.files[filePath]) {
+            if (this.files[filePath][rangeKey]) {
+                return this.files[filePath][rangeKey];
+            }
+        }
+
+        return undefined;
+    }
+
+    public addFileRange(filePath: string, rangeKey: string, range: vscode.Range, decoration: vscode.TextEditorDecorationType) {
+        if (this.files[filePath]) {
+            this.files[filePath][rangeKey] = new Highlight(range, decoration);
+        }
+    }
+}
+
+export class Highlight {
+    range: vscode.Range;
+    decoration: vscode.TextEditorDecorationType;
+
+    constructor(range: vscode.Range, decoration: vscode.TextEditorDecorationType) {
+        this.range = range;
+        this.decoration = decoration;
+    }
+}
