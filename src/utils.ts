@@ -77,13 +77,13 @@ export class Recorder {
         }
     };
 
+    // TODO: Fix saving object
     constructor(files: void | any) {
         this.files = {};
         if (files) {
             for (let file in files) {
                 this.files[file] = {};
                 for (let range in files[file]) {
-                    console.log(files[file][range]);
                     let l1 = files[file][range].range[0].line;
                     let c1 = files[file][range].range[0].character;
 
