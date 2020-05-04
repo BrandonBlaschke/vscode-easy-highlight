@@ -9,6 +9,7 @@ let activeEditor: vscode.TextEditor | undefined = undefined;
 const defaultColor = '#fdff322f';
 
 // Record Editors that have been marked
+// @ts-ignore
 let recorder = new utils.Recorder();
 
 // this method is called when your extension is activated
@@ -18,6 +19,14 @@ export function activate(context: vscode.ExtensionContext) {
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('Highlight');
+
+	// context.workspaceState.update("Recorder", {});
+	let temp = context.workspaceState.get("Recorder");
+	// @ts-ignore
+	temp = new utils.Recorder(temp["files"]);
+	if (temp instanceof utils.Recorder) {
+		recorder = temp;
+	}
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
@@ -161,6 +170,8 @@ export function activate(context: vscode.ExtensionContext) {
 			let highlight = ranges[range];
 			activeEditor.setDecorations(highlight.decoration, [highlight.range]);
 		}
+
+		context.workspaceState.update("Recorder", recorder);
 	};
 
 	// When editor switches update activeEditor and update decorations.

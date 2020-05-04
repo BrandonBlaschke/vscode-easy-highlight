@@ -77,8 +77,28 @@ export class Recorder {
         }
     };
 
-    constructor() {
+    constructor(files: void | any) {
         this.files = {};
+        if (files) {
+            for (let file in files) {
+                this.files[file] = {};
+                for (let range in files[file]) {
+                    console.log(files[file][range]);
+                    let l1 = files[file][range].range[0].line;
+                    let c1 = files[file][range].range[0].character;
+
+                    let l2 = files[file][range].range[1].line;
+                    let c2 = files[file][range].range[1].character;
+                    let rangeObj = new vscode.Range(new vscode.Position(l1, c1), new vscode.Position(l2, c2));
+
+                    const decoration = vscode.window.createTextEditorDecorationType({
+                        backgroundColor: '#fdff322f',
+                    });
+
+                    this.files[file][range] = new Highlight(rangeObj, decoration);
+                }
+            }
+        }
     }
 
     public hasFile(filePath: string): boolean {
