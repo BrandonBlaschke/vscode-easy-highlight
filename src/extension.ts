@@ -8,8 +8,8 @@ import * as utils from './utils';
 let activeEditor: vscode.TextEditor | undefined = undefined;
 const defaultColor = '#fdff322f';
 
-// Editors that have been marked
-const markedEditors = new Map<string, Map<string, {ranges: vscode.Range[], decoration: vscode.TextEditorDecorationType}>>();
+// Record Editors that have been marked
+let recorder = new utils.Recorder();
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -47,22 +47,19 @@ export function activate(context: vscode.ExtensionContext) {
 		// Create range key
 		const rangeKey = utils.generateRangeKey(startPos, endPos);
 
-		if (!markedEditors.has(path)) {
-			markedEditors.set(path, new Map<string, {ranges: vscode.Range[], decoration: vscode.TextEditorDecorationType}>());
+		if (!recorder.hasFile(path)) {
+			recorder.setFile(path, {});
 		}
-
-		const rangeMap = markedEditors.get(path)!;
 
 		const decoration = vscode.window.createTextEditorDecorationType({
 			backgroundColor: defaultColor,
 		});
 
-		// If range already exist update decoration else add new one
-		if (rangeMap.has(rangeKey)) {
-			let hlObject = rangeMap.get(rangeKey)!;
-			hlObject.decoration = decoration;
+		if (recorder.hasFileRange(path, rangeKey)) {
+			let highlight = recorder.getFileRange(path, rangeKey)!;
+			highlight.decoration = decoration;
 		} else {
-			rangeMap.set(rangeKey, {ranges: [range], decoration});
+			recorder.addFileRange(path, rangeKey, range, decoration);
 		}
 
 		updateDecorations(activeEditor);
@@ -90,53 +87,43 @@ export function activate(context: vscode.ExtensionContext) {
 		// Create range key
 		const rangeKey = utils.generateRangeKey(startPos, endPos);
 
-		// If ranges match remove highlight
-		if (markedEditors.has(path) && markedEditors.get(path)?.has(rangeKey)) {
-			markedEditors.get(path)?.get(rangeKey)?.decoration.dispose();
-			markedEditors.get(path)?.delete(rangeKey);
+		if (recorder.hasFile(path) && recorder.hasFileRange(path, rangeKey)) {
+			recorder.getFileRange(path, rangeKey)?.decoration.dispose();
+			recorder.removeFileRange(path, rangeKey);
 			return;
 		}
 
-		let keys = Array.from(markedEditors.get(path)?.keys()!);
-
-		keys.forEach((key) => {
+		for (let key in recorder.getFileRanges(path)) {
+			let highlight = recorder.getFileRange(path, key)!;
 			
-			let oldRange = markedEditors.get(path)?.get(key)?.ranges[0];
-			let oldDecor = markedEditors.get(path)?.get(key)?.decoration!;
-
-			if (oldRange) {
-				let oldKey = utils.generateRangeKey(oldRange.start, oldRange.end);
-				let newRanges = utils.modifyRange(startPos, endPos, oldRange, oldDecor);
-
-				if (newRanges === undefined) {
-					return;
-				}
-
-				let newRange1 = newRanges?.newRange1;
-				let newRange2 = newRanges?.newRange2;
-				
-				// If new range(s) created update map with new key and remove old range
-				if (newRange1) {
-					// TODO: Make it decoration be the same color as was before.
-					const decoration = vscode.window.createTextEditorDecorationType({
-						backgroundColor: defaultColor,
-					});
-					markedEditors.get(path)?.delete(oldKey);
-					oldDecor.dispose();
-					let newKey = utils.generateRangeKey(newRange1.start, newRange1.end);
-					markedEditors.get(path)?.set(newKey, {ranges: [newRange1], decoration});
-				}
-
-				if (newRange2) {
-					const decoration = vscode.window.createTextEditorDecorationType({
-						backgroundColor: defaultColor,
-					});
-					let newKey = utils.generateRangeKey(newRange2.start, newRange2.end);
-					markedEditors.get(path)?.set(newKey, {ranges: [newRange2], decoration});
-				}
+			let newRanges = utils.modifyRange(startPos, endPos, highlight?.range, highlight?.decoration);
+			if (newRanges === undefined) {
+				recorder.removeFileRange(path, key);
+				continue;
 			}
-		});
 
+			let newRange1 = newRanges?.newRange1;
+			let newRange2 = newRanges?.newRange2;
+			
+			// TODO: Make sure decorations use the same styles when removing them.
+			if (newRange1) {
+				const decoration = vscode.window.createTextEditorDecorationType({
+					backgroundColor: defaultColor,
+				});
+				recorder.removeFileRange(path, key);
+				highlight?.decoration.dispose();
+				let newKey = utils.generateRangeKey(newRange1.start, newRange1.end);
+				recorder.addFileRange(path, newKey, newRange1, decoration);
+			}
+
+			if (newRange2) {
+				const decoration = vscode.window.createTextEditorDecorationType({
+					backgroundColor: defaultColor,
+				});
+				let newKey = utils.generateRangeKey(newRange2.start, newRange2.end);
+				recorder.addFileRange(path, newKey, newRange2, decoration);
+			}
+		}
 		updateDecorations(activeEditor);
 	});
 
@@ -150,27 +137,30 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const path = activeEditor.document.uri.path.toString();
 
-		if (!markedEditors.has(path)) {
-			return; 
+		if (!recorder.hasFile(path)) {
+			return;
 		}
 
-		markedEditors.get(path)?.forEach((val, key) => {
-			val.decoration.dispose();
-			val.ranges = [];
-		});
+		for (let rangeKey in recorder.getFileRanges(path)) {
+			recorder.getFileRange(path, rangeKey)?.decoration.dispose();
+			recorder.removeFileRange(path, rangeKey);
+		}
 	});
 
 	// Updates Decorations on current ActiveEditor
 	let updateDecorations = (activeEditor: vscode.TextEditor) => {
 
 		const path = activeEditor.document.uri.path.toString();
-		if (!markedEditors.has(path)) {
+
+		if (!recorder.hasFile(path)) {
 			return;
 		}
 
-		markedEditors.get(path)?.forEach((val, key) => {
-			activeEditor.setDecorations(val.decoration!, val.ranges!);
-		});
+		let ranges = recorder.getFileRanges(path);
+		for (let range in ranges) {
+			let highlight = ranges[range];
+			activeEditor.setDecorations(highlight.decoration, [highlight.range]);
+		}
 	};
 
 	// When editor switches update activeEditor and update decorations.
@@ -192,10 +182,10 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.workspace.onWillRenameFiles((event) => {
 		event.files.forEach((files) => {
 			const oldPath = files.oldUri.path.toString();
-			if (markedEditors.has(oldPath)) {
-				const highlights = markedEditors.get(oldPath)!;
-				markedEditors.delete(oldPath);
-				markedEditors.set(files.newUri.path.toString(), highlights);
+			if (recorder.hasFile(oldPath)) {
+				const highlights = recorder.getFileRanges(oldPath);
+				recorder.removeFile(oldPath);
+				recorder.setFile(files.newUri.path.toString(), highlights);
 			}
 		});
 	}, null, context.subscriptions);

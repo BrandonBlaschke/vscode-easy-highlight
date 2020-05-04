@@ -69,6 +69,7 @@ export let modifyRange = (
 };
 
 // Records all highlights done to files in a workspace.
+// TODO: Documentation / clean up
 export class Recorder {
     files: {
         [file: string]: {
@@ -114,6 +115,18 @@ export class Recorder {
     public addFileRange(filePath: string, rangeKey: string, range: vscode.Range, decoration: vscode.TextEditorDecorationType) {
         if (this.files[filePath]) {
             this.files[filePath][rangeKey] = new Highlight(range, decoration);
+        }
+    }
+
+    public removeFileRange(filePath: string, rangeKey: string) {
+        if (this.files[filePath] && this.files[filePath][rangeKey]) {
+            delete this.files[filePath][rangeKey];
+        }
+    }
+
+    public removeFile(filePath: string) {
+        if (this.files[filePath]) {
+            delete this.files[filePath];
         }
     }
 }
