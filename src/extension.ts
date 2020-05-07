@@ -159,8 +159,11 @@ export function activate(context: vscode.ExtensionContext) {
 	// Updates Decorations on current ActiveEditor
 	let updateDecorations = (activeEditor: vscode.TextEditor) => {
 
-		const path = activeEditor.document.uri.path.toString();
+		if (!activeEditor) {
+			return;
+		}
 
+		const path = activeEditor.document.uri.path.toString();
 		if (!recorder.hasFile(path)) {
 			return;
 		}
@@ -173,6 +176,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 		context.workspaceState.update("Recorder", recorder);
 	};
+
+	// Update files when vscode is opened.
+	activeEditor = vscode.window.activeTextEditor!;
+	updateDecorations(activeEditor);
 
 	// When editor switches update activeEditor and update decorations.
 	vscode.window.onDidChangeActiveTextEditor(editor => {

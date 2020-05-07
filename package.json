@@ -10,10 +10,7 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:easy-highlight.Highlight",
-		"onCommand:easy-highlight.RemoveHighlight",
-		"onCommand:easy-highlight.RemoveAllHighlights"
-	],
+		"*"],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
