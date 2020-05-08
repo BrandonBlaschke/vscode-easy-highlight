@@ -2,41 +2,28 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as utils from './utils';
+import {Recorder} from './Recorder';
 
 // TODO: Remove all console.log statements
-
 let activeEditor: vscode.TextEditor | undefined = undefined;
 const defaultColor = '#fdff322f';
 
 // Record Editors that have been marked
-// @ts-ignore
-let recorder = new utils.Recorder();
+let recorder = new Recorder();
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
 	console.log('Highlight');
 
 	// context.workspaceState.update("Recorder", {});
 	let temp = context.workspaceState.get("Recorder");
-	// @ts-ignore
-	temp = new utils.Recorder(temp["files"]);
-	if (temp instanceof utils.Recorder) {
+	// @ts-ignore Will always have attribute "files"
+	temp = new Recorder(temp["files"]);
+	if (temp instanceof Recorder) {
 		recorder = temp;
 	}
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
 	let disposable = vscode.commands.registerCommand('easy-highlight.Highlight', () => {
-		// The code you place here will be executed every time your command is executed
-
-		// Display a message box to the user
-		// vscode.window.showInformationMessage('Easy Highlight!');
-		
 		// Get current text editor that is open and their selection
 		activeEditor = vscode.window.activeTextEditor;
 		if (!activeEditor) {
@@ -68,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
 			let highlight = recorder.getFileRange(path, rangeKey)!;
 			highlight.decoration = decoration;
 		} else {
-			recorder.addFileRange(path, rangeKey, range, decoration);
+			recorder.addFileRange(path, rangeKey, range, decoration, defaultColor);
 		}
 
 		updateDecorations(activeEditor);
@@ -122,7 +109,7 @@ export function activate(context: vscode.ExtensionContext) {
 				recorder.removeFileRange(path, key);
 				highlight?.decoration.dispose();
 				let newKey = utils.generateRangeKey(newRange1.start, newRange1.end);
-				recorder.addFileRange(path, newKey, newRange1, decoration);
+				recorder.addFileRange(path, newKey, newRange1, decoration, defaultColor);
 			}
 
 			if (newRange2) {
@@ -130,7 +117,7 @@ export function activate(context: vscode.ExtensionContext) {
 					backgroundColor: defaultColor,
 				});
 				let newKey = utils.generateRangeKey(newRange2.start, newRange2.end);
-				recorder.addFileRange(path, newKey, newRange2, decoration);
+				recorder.addFileRange(path, newKey, newRange2, decoration, defaultColor);
 			}
 		}
 		updateDecorations(activeEditor);
