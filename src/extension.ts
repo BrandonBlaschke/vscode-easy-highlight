@@ -23,6 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 		recorder = temp;
 	}
 
+	// Add highlight to the region the user selected.
 	let disposable = vscode.commands.registerCommand('easy-highlight.Highlight', () => {
 		// Get current text editor that is open and their selection
 		activeEditor = vscode.window.activeTextEditor;
@@ -62,6 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	// TODO: Dispose of the highlight that matches that line and spice it or something
+	// Remove any highlights that the user selected within the region.
 	let disposableNoHighlight = vscode.commands.registerCommand("easy-highlight.RemoveHighlight", () => {
 		
 		console.log('Remove Highlight');
