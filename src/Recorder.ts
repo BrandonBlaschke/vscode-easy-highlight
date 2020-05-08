@@ -64,7 +64,10 @@ export class Recorder {
      * @returns Object that maps a range key to a Highlight interface.
      */
     public getFileRanges(filePath: string): {[range: string]: Highlight} {
-        return this.files[filePath];
+        if (this.files[filePath]) {
+            return this.files[filePath];
+        }
+        return {};
     }
 
     /**
