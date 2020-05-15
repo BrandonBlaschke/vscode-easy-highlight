@@ -20,7 +20,7 @@
 				"easy-highlight.highlightColor": {
 					"type": "string",
 					"default": "#fdff322f",
-					"description": "Color to use for highlight, takes hex color notation e.g. \"#fdff322f\"."
+					"description": "Color to use for highlight, takes hex color notation e.g. \"#fdff322f\". If invalid color given defaults to \"#fdff322f\"."
 				}
 			}
 		},
