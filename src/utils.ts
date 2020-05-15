@@ -1,4 +1,7 @@
 import * as vscode from 'vscode';
+import isHexColor from 'validator/lib/isHexColor';
+
+const DEFAULT_COLOR = '#fdff322f';
 
 /**
  * Generates a unique string key for the Map for a given start and end position.
@@ -86,4 +89,17 @@ export let modifyRange = (
     }
 
     return {newRange1: range, newRange2: undefined};
+};
+
+/**
+ * Get the color set in the JSON configuration.
+ * @returns String that is formatted in hex color notation.
+ */
+export let getConfigColor = (): string => {
+
+	// @ts-ignore Always returns string
+    let color = vscode.workspace.getConfiguration().get("easy-highlight")["highlightColor"];
+    if (isHexColor(color)) { return color; } 
+
+    return DEFAULT_COLOR;
 };

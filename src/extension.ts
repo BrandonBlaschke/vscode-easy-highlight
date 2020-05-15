@@ -6,7 +6,6 @@ import {Recorder} from './Recorder';
 
 // TODO: Remove all console.log statements
 let activeEditor: vscode.TextEditor | undefined = undefined;
-const defaultColor = '#fdff322f';
 
 // Record Editors that have been marked
 let recorder = new Recorder();
@@ -14,8 +13,8 @@ let recorder = new Recorder();
 export function activate(context: vscode.ExtensionContext) {
 
 	console.log('Highlight');
-
 	// context.workspaceState.update("Recorder", {});
+
 	let temp = context.workspaceState.get("Recorder");
 	// @ts-ignore Will always have attribute "files"
 	temp = new Recorder(temp["files"]);
@@ -48,21 +47,22 @@ export function activate(context: vscode.ExtensionContext) {
 			recorder.setFile(path, {});
 		}
 
+		const color = utils.getConfigColor();
+
 		const decoration = vscode.window.createTextEditorDecorationType({
-			backgroundColor: defaultColor,
+			backgroundColor: color,
 		});
 
 		if (recorder.hasFileRange(path, rangeKey)) {
 			let highlight = recorder.getFileRange(path, rangeKey)!;
 			highlight.decoration = decoration;
 		} else {
-			recorder.addFileRange(path, rangeKey, range, decoration, defaultColor);
+			recorder.addFileRange(path, rangeKey, range, decoration, color);
 		}
 
 		updateDecorations(activeEditor);
 	});
 
-	// TODO: Dispose of the highlight that matches that line and spice it or something
 	// Remove any highlights that the user selected within the region.
 	let disposableNoHighlight = vscode.commands.registerCommand("easy-highlight.RemoveHighlight", () => {
 		
@@ -103,23 +103,22 @@ export function activate(context: vscode.ExtensionContext) {
 			let newRange1 = newRanges?.newRange1;
 			let newRange2 = newRanges?.newRange2;
 			
-			// TODO: Make sure decorations use the same styles when removing them.
 			if (newRange1) {
 				const decoration = vscode.window.createTextEditorDecorationType({
-					backgroundColor: defaultColor,
+					backgroundColor: highlight.color,
 				});
 				recorder.removeFileRange(path, key);
 				highlight?.decoration.dispose();
 				let newKey = utils.generateRangeKey(newRange1.start, newRange1.end);
-				recorder.addFileRange(path, newKey, newRange1, decoration, defaultColor);
+				recorder.addFileRange(path, newKey, newRange1, decoration, highlight.color);
 			}
 
 			if (newRange2) {
 				const decoration = vscode.window.createTextEditorDecorationType({
-					backgroundColor: defaultColor,
+					backgroundColor: highlight.color,
 				});
 				let newKey = utils.generateRangeKey(newRange2.start, newRange2.end);
-				recorder.addFileRange(path, newKey, newRange2, decoration, defaultColor);
+				recorder.addFileRange(path, newKey, newRange2, decoration, highlight.color);
 			}
 		}
 		updateDecorations(activeEditor);
