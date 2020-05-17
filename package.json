@@ -7,6 +7,7 @@
 		"color": "#C80000",
 		"theme": "dark"
 	},
+	"publisher": "BrandonBlaschke",
 	"homepage": "https://github.com/BrandonBlaschke/vscode-easy-highlight/blob/master/README.md",
 	"repository": {
 		"type": "git",
