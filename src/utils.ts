@@ -3,6 +3,13 @@ import isHexColor from 'validator/lib/isHexColor';
 
 const DEFAULT_COLOR = '#fdff322f';
 
+// Relative position of position compared to range.
+enum RelativePosition {
+    Behind,
+    In,
+    Ahead
+}
+
 /**
  * Generates a unique string key for the Map for a given start and end position.
  * @param startPosition Start position of the Range.
@@ -20,27 +27,23 @@ export let generateRangeKey = (startPosition: vscode.Position, endPosition: vsco
  * @returns 0 if position is behind the range, 1 if the position is in the range, 2 if the position
  * is ahead of the range.
  */
-let positionRelativeToRange = (position: vscode.Position, range: vscode.Range): number => {
+let positionRelativeToRange = (position: vscode.Position, range: vscode.Range): RelativePosition => {
 
     // Check if behind
     if (position.line < range.start.line) {
-        return 0;
-    } else if (position.line === range.start.line) {
-        if (position.character <= range.start.character) {
-            return 0;
-        }
+        return RelativePosition.Behind;
+    } else if (position.line === range.start.line && position.character <= range.start.character) {
+        return RelativePosition.Behind;
     }
 
     // Check if ahead
     if (position.line > range.end.line) {
-        return 2;
-    } else if (position.line === range.end.line) {
-        if (position.character >= range.end.character) {
-            return 2;
-        }
+        return RelativePosition.Ahead;
+    } else if (position.line === range.end.line && position.character >= range.end.character) {
+        return RelativePosition.Ahead;
     }
 
-    return 1;
+    return RelativePosition.In;
 };
 
 /**
@@ -61,28 +64,27 @@ export let modifyRange = (
 
     let startLoc = positionRelativeToRange(startPosition, range);
     let endLoc = positionRelativeToRange(endPosition, range);
-    console.log(startLoc, endLoc);
 
-    // If start is in and end is above trim to the start
-    if (startLoc === 1 && endLoc === 2) {
+    // If start is in and end is ahead trim to the start
+    if (startLoc === RelativePosition.In && endLoc === RelativePosition.Ahead) {
         let newRange1 = new vscode.Range(range.start, startPosition);
         return {newRange1, newRange2: undefined};
     }
 
-    // If end is in and start is below trim to end
-    if (startLoc === 0 && endLoc === 1) {
+    // If end is in and start is behind trim to end
+    if (startLoc === RelativePosition.Behind && endLoc === RelativePosition.In) {
         let newRange1 = new vscode.Range(endPosition, range.end);
         return {newRange1, newRange2: undefined};
     }
 
-    // if start is below and end is above remove highlight
-    if (startLoc === 0 && endLoc === 2) {
+    // if start is behind and end is ahead remove highlight
+    if (startLoc === RelativePosition.Behind && endLoc === RelativePosition.Ahead) {
         decoration.dispose();
         return undefined;
     }
 
     // if both in highlight then split highlight into two.
-    if (startLoc === 1 && endLoc === 1) {
+    if (startLoc === RelativePosition.In && endLoc === RelativePosition.In) {
         let newRange1 = new vscode.Range(range.start, startPosition);
         let newRange2 = new vscode.Range(endPosition, range.end);
         return {newRange1, newRange2};

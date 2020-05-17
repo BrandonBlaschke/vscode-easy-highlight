@@ -4,19 +4,15 @@ import * as vscode from 'vscode';
 import * as utils from './utils';
 import {Recorder} from './Recorder';
 
-// TODO: Remove all console.log statements
 let activeEditor: vscode.TextEditor | undefined = undefined;
 
 // Record Editors that have been marked
 let recorder = new Recorder();
 
 export function activate(context: vscode.ExtensionContext) {
-
-	console.log('Highlight');
-	// context.workspaceState.update("Recorder", {});
-
+	
 	let temp = context.workspaceState.get("Recorder");
-	// @ts-ignore Will always have attribute "files"
+	// @ts-ignore Will always have attribute "files" else undefined and fresh Recorder.
 	temp = new Recorder(temp["files"]);
 	if (temp instanceof Recorder) {
 		recorder = temp;
@@ -65,8 +61,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Remove any highlights that the user selected within the region.
 	let disposableNoHighlight = vscode.commands.registerCommand("easy-highlight.RemoveHighlight", () => {
-		
-		console.log('Remove Highlight');
 
 		// Get current text editor that is open and their selection
 		activeEditor = vscode.window.activeTextEditor;
@@ -126,7 +120,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Disposes of all highlights on a single text editor
 	let disposableRemoveAll = vscode.commands.registerCommand("easy-highlight.RemoveAllHighlights", () => {
-		console.log("Remove all highlights");
 
 		if (!activeEditor) {
 			return;
