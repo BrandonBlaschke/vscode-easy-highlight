@@ -12,10 +12,9 @@ let recorder = new Recorder();
 export function activate(context: vscode.ExtensionContext) {
 	
 	let temp = context.workspaceState.get("Recorder");
-	// @ts-ignore Will always have attribute "files" else undefined and fresh Recorder.
-	temp = new Recorder(temp["files"]);
-	if (temp instanceof Recorder) {
-		recorder = temp;
+	if (temp) {
+		// @ts-ignore Will always have attribute "files" else undefined and fresh Recorder.
+		recorder = new Recorder(temp["files"]);
 	}
 
 	// Add highlight to the region the user selected.

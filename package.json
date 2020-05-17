@@ -5,7 +5,7 @@
 	"icon": "resources/icon.png",
 	"galleryBanner": {
 		"color": "#ffffff",
-		"theme": "dark"
+		"theme": "light"
 	},
 	"publisher": "BrandonBlaschke",
 	"homepage": "https://github.com/BrandonBlaschke/vscode-easy-highlight/blob/master/README.md",
@@ -13,7 +13,7 @@
 		"type": "git",
 		"url": "https://github.com/BrandonBlaschke/vscode-easy-highlight"
 	},
-	"version": "0.0.2",
+	"version": "0.0.1",
 	"author": {
 		"name": "Brandon Blaschke"
 	},
