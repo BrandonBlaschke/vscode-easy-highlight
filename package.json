@@ -2,7 +2,20 @@
 	"name": "easy-highlight",
 	"displayName": "Easy Highlight",
 	"description": "Easily highlight lines of text",
+	"icon": "resources/icon.png",
+	"galleryBanner": {
+		"color": "#C80000",
+		"theme": "dark"
+	},
+	"homepage": "https://github.com/BrandonBlaschke/vscode-easy-highlight/blob/master/README.md",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/BrandonBlaschke/vscode-easy-highlight"
+	},
 	"version": "0.0.1",
+	"author": {
+		"name": "Brandon Blaschke"
+	},
 	"engines": {
 		"vscode": "^1.44.0"
 	},
