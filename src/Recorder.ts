@@ -10,7 +10,6 @@ export class Recorder {
         }
     };
 
-    // TODO: Refactor saving object maybe
     /**
      * @param files JSON object that conforms to the Recorder class.
      */
