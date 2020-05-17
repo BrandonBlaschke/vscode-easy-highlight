@@ -4,7 +4,7 @@
 	"description": "Easily highlight lines of text",
 	"icon": "resources/icon.png",
 	"galleryBanner": {
-		"color": "#C80000",
+		"color": "#ffffff",
 		"theme": "dark"
 	},
 	"publisher": "BrandonBlaschke",
