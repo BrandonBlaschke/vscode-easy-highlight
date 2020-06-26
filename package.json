@@ -13,7 +13,7 @@
 		"type": "git",
 		"url": "https://github.com/BrandonBlaschke/vscode-easy-highlight"
 	},
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"author": {
 		"name": "Brandon Blaschke"
 	},
