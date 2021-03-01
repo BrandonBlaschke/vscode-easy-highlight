@@ -114,14 +114,14 @@ export let getConfigColor = (): string => {
  * @param filePath Path to the file that the new range is associated with.
  * @param recorder Recorder Object.
  */
-export let moveRanges = (range: vscode.Range, filePath: string, recorder: Recorder): void => {
+export let moveRanges = (activeEditor: vscode.TextEditor, range: vscode.Range, filePath: string, recorder: Recorder): void => {
     let rangeItems = recorder.getFileRanges(filePath);
-    for (let key in Object.keys(rangeItems)) {
+    for (let key in rangeItems) {
         let highlightRange = rangeItems[key].range;
         
         // if added text on same line as highlight and its before the highlight, bump highlight by its length
-        if (range.isSingleLine && highlightRange.start.line == range.start.line && highlightRange.start.character >= range.end.character) {
-            let length = range.end.character - range.start.character;
+        if (range.isSingleLine && highlightRange.start.line === range.start.line && highlightRange.start.character >= range.end.character) {
+            let length = range.end.character - range.start.character + 1;
 
             let rangeObj = new vscode.Range(
                 new vscode.Position(highlightRange.start.line, highlightRange.start.character + length),
@@ -129,8 +129,13 @@ export let moveRanges = (range: vscode.Range, filePath: string, recorder: Record
             let rangeKey = generateRangeKey(rangeObj.start, rangeObj.end);
             
             // Add new range and remove the old range
-            recorder.addFileRange(filePath, rangeKey, rangeObj, rangeItems[key].decoration, rangeItems[key].color);
+            rangeItems[key].decoration.dispose();
+            const decoration = vscode.window.createTextEditorDecorationType({
+                backgroundColor: DEFAULT_COLOR,
+            });
+            recorder.addFileRange(filePath, rangeKey, rangeObj, decoration, rangeItems[key].color);
             recorder.removeFileRange(filePath, key);
+            console.log(recorder.getFileRanges(filePath));
         }
     }
 }

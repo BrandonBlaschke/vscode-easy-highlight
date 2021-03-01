@@ -173,7 +173,9 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.workspace.onDidChangeTextDocument(event => {
 		if (activeEditor && event.document === activeEditor.document) {
 			const path = activeEditor.document.uri.path.toString();
-			utils.moveRanges(event.contentChanges[0].range, path, recorder);
+			if (event.contentChanges.length > 0) {
+				utils.moveRanges(activeEditor, event.contentChanges[0].range, path, recorder);
+			}
 			updateDecorations(activeEditor);
 		}
 	}, null, context.subscriptions);
