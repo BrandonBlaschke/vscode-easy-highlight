@@ -28,3 +28,11 @@ This extension contributes the following settings:
 
 Initial release of Easy Highlight
 
+### 1.1.0
+
+Update Background
+
+### 1.2.0
+
+Fixed highlights not being updated when adding text to the document
+

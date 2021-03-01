@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import isHexColor from 'validator/lib/isHexColor';
+import { Recorder } from './Recorder';
+import { privateEncrypt } from 'crypto';
 
 const DEFAULT_COLOR = '#fdff322f';
 
@@ -105,3 +107,30 @@ export let getConfigColor = (): string => {
 
     return DEFAULT_COLOR;
 };
+
+/**
+ * Moves all highlight ranges by the length of the new range provided in the file filePath, if it should be updated.
+ * @param range New Range Object that was inserted into the document.
+ * @param filePath Path to the file that the new range is associated with.
+ * @param recorder Recorder Object.
+ */
+export let moveRanges = (range: vscode.Range, filePath: string, recorder: Recorder): void => {
+    let rangeItems = recorder.getFileRanges(filePath);
+    for (let key in Object.keys(rangeItems)) {
+        let highlightRange = rangeItems[key].range;
+        
+        // if added text on same line as highlight and its before the highlight, bump highlight by its length
+        if (range.isSingleLine && highlightRange.start.line == range.start.line && highlightRange.start.character >= range.end.character) {
+            let length = range.end.character - range.start.character;
+
+            let rangeObj = new vscode.Range(
+                new vscode.Position(highlightRange.start.line, highlightRange.start.character + length),
+                new vscode.Position(highlightRange.end.line, highlightRange.end.character + length));
+            let rangeKey = generateRangeKey(rangeObj.start, rangeObj.end);
+            
+            // Add new range and remove the old range
+            recorder.addFileRange(filePath, rangeKey, rangeObj, rangeItems[key].decoration, rangeItems[key].color);
+            recorder.removeFileRange(filePath, key);
+        }
+    }
+}
