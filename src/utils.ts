@@ -114,7 +114,7 @@ export let getConfigColor = (): string => {
  * @param filePath Path to the file that the new range is associated with.
  * @param recorder Recorder Object.
  */
-export let moveRanges = (activeEditor: vscode.TextEditor, range: vscode.Range, filePath: string, recorder: Recorder): void => {
+export let moveRanges = (activeEditor: vscode.TextEditor, range: vscode.Range, filePath: string, diff: number, new_lines: number, recorder: Recorder): void => {
     let rangeItems = recorder.getFileRanges(filePath);
     for (let key in rangeItems) {
         let highlightRange = rangeItems[key].range;
@@ -135,7 +135,28 @@ export let moveRanges = (activeEditor: vscode.TextEditor, range: vscode.Range, f
             });
             recorder.addFileRange(filePath, rangeKey, rangeObj, decoration, rangeItems[key].color);
             recorder.removeFileRange(filePath, key);
-            console.log(recorder.getFileRanges(filePath));
+            continue;
+        }
+
+        if (range.start.line > highlightRange.end.line) {
+            // Change is above highlight do nothing
+            continue;
+        } else if (range.start.line < highlightRange.start.line && range.end.line > highlightRange.end.line) {
+            // New line within highlight then remove completely 
+            rangeItems[key].decoration.dispose();
+            recorder.removeFileRange(filePath, key);
+        } else if (new_lines > 0){
+            // TODO: Make this a helper function repeated code
+            let rangeObj = new vscode.Range(
+                new vscode.Position(highlightRange.start.line + diff, highlightRange.start.character),
+                new vscode.Position(highlightRange.end.line + diff, highlightRange.end.character));
+            let rangeKey = generateRangeKey(rangeObj.start, rangeObj.end);
+            rangeItems[key].decoration.dispose();
+            const decoration = vscode.window.createTextEditorDecorationType({
+                backgroundColor: DEFAULT_COLOR,
+            });
+            recorder.addFileRange(filePath, rangeKey, rangeObj, decoration, rangeItems[key].color);
+            recorder.removeFileRange(filePath, key);
         }
     }
 }

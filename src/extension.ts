@@ -173,10 +173,17 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.workspace.onDidChangeTextDocument(event => {
 		if (activeEditor && event.document === activeEditor.document) {
 			const path = activeEditor.document.uri.path.toString();
-			if (event.contentChanges.length > 0) {
-				utils.moveRanges(activeEditor, event.contentChanges[0].range, path, recorder);
+			
+			for (const change of event.contentChanges) {
+				const startLine = change.range.start.line;
+				const endLine = change.range.end.line;
+				const linesInRange = endLine - startLine;
+				const linesInserted = change.text.split("\n").length - 1;
+				const diff = linesInserted - linesInRange;
+				utils.moveRanges(activeEditor, change.range, path, diff, linesInserted, recorder);
+				updateDecorations(activeEditor);
 			}
-			updateDecorations(activeEditor);
+			
 		}
 	}, null, context.subscriptions);
 
