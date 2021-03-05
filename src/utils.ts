@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import isHexColor from 'validator/lib/isHexColor';
 import { Recorder } from './Recorder';
-import { privateEncrypt } from 'crypto';
 
 const DEFAULT_COLOR = '#fdff322f';
 
@@ -110,7 +109,7 @@ export let getConfigColor = (): string => {
 
 /**
  * Moves all highlight ranges by the length of the new range provided in the file filePath, if it should be updated.
- * @param range New Range Object that was inserted into the document.
+ * @param changeEvent Change event that occurred
  * @param filePath Path to the file that the new range is associated with.
  * @param recorder Recorder Object.
  */
@@ -125,16 +124,20 @@ export let moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, fil
     const range = changeEvent.range;
 
     // TODO:
-    // Doesn't work when line gets deleted
-    // Doesn't work when selected text gets removed on multiple lines
-    // Highlight doesn't grow or reduce when typing inside it.
+    // Highlight doesn't grow or reduce, should be comparing if change on last line and end character
+    // selecting text and then typing a character moves highlight range by one when it shouldn't
 
     for (let key in rangeItems) {
         let highlightRange = rangeItems[key].range;
         
         // if added text on same line as highlight and its before the highlight, bump highlight by its length
         if (range.isSingleLine && highlightRange.start.line === range.start.line && highlightRange.start.character >= range.end.character) {
-            let length = changeEvent. text === "" ? changeEvent.rangeLength * -1 : changeEvent.text.length;
+            let length = 0;
+            if (changeEvent.rangeLength >= changeEvent.text.length || changeEvent.text === "") {
+                length = (changeEvent.rangeLength) * -1;
+            } else {
+                length = changeEvent.text.length;
+            }
 
             let rangeObj = new vscode.Range(
                 new vscode.Position(highlightRange.start.line, highlightRange.start.character + length),
@@ -158,7 +161,7 @@ export let moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, fil
             // New line within highlight then remove completely 
             rangeItems[key].decoration.dispose();
             recorder.removeFileRange(filePath, key);
-        } else if (linesInserted > 0){
+        } else if (diff !== 0){
             // TODO: Make this a helper function repeated code
             let rangeObj = new vscode.Range(
                 new vscode.Position(highlightRange.start.line + diff, highlightRange.start.character),
