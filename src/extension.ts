@@ -175,12 +175,7 @@ export function activate(context: vscode.ExtensionContext) {
 			const path = activeEditor.document.uri.path.toString();
 			
 			for (const change of event.contentChanges) {
-				const startLine = change.range.start.line;
-				const endLine = change.range.end.line;
-				const linesInRange = endLine - startLine;
-				const linesInserted = change.text.split("\n").length - 1;
-				const diff = linesInserted - linesInRange;
-				utils.moveRanges(activeEditor, change.range, path, diff, linesInserted, recorder);
+				utils.moveRanges(change, path, recorder);
 				updateDecorations(activeEditor);
 			}
 			

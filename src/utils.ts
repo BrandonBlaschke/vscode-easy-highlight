@@ -114,14 +114,27 @@ export let getConfigColor = (): string => {
  * @param filePath Path to the file that the new range is associated with.
  * @param recorder Recorder Object.
  */
-export let moveRanges = (activeEditor: vscode.TextEditor, range: vscode.Range, filePath: string, diff: number, new_lines: number, recorder: Recorder): void => {
+export let moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, filePath: string, recorder: Recorder): void => {
     let rangeItems = recorder.getFileRanges(filePath);
+
+    const startLine = changeEvent.range.start.line;
+    const endLine = changeEvent.range.end.line;
+    const linesInRange = endLine - startLine;
+    const linesInserted = changeEvent.text.split("\n").length - 1;
+    const diff = linesInserted - linesInRange;
+    const range = changeEvent.range;
+
+    // TODO:
+    // Doesn't work when line gets deleted
+    // Doesn't work when selected text gets removed on multiple lines
+    // Highlight doesn't grow or reduce when typing inside it.
+
     for (let key in rangeItems) {
         let highlightRange = rangeItems[key].range;
         
         // if added text on same line as highlight and its before the highlight, bump highlight by its length
         if (range.isSingleLine && highlightRange.start.line === range.start.line && highlightRange.start.character >= range.end.character) {
-            let length = range.end.character - range.start.character + 1;
+            let length = changeEvent. text === "" ? changeEvent.rangeLength * -1 : changeEvent.text.length;
 
             let rangeObj = new vscode.Range(
                 new vscode.Position(highlightRange.start.line, highlightRange.start.character + length),
@@ -145,7 +158,7 @@ export let moveRanges = (activeEditor: vscode.TextEditor, range: vscode.Range, f
             // New line within highlight then remove completely 
             rangeItems[key].decoration.dispose();
             recorder.removeFileRange(filePath, key);
-        } else if (new_lines > 0){
+        } else if (linesInserted > 0){
             // TODO: Make this a helper function repeated code
             let rangeObj = new vscode.Range(
                 new vscode.Position(highlightRange.start.line + diff, highlightRange.start.character),
