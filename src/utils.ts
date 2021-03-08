@@ -107,6 +107,17 @@ export let getConfigColor = (): string => {
     return DEFAULT_COLOR;
 };
 
+const updateHighlight = (newRange: vscode.Range, oldDecoration: vscode.TextEditorDecorationType,
+    filePath: string, oldKey:string, color: string, recorder: Recorder): void => {
+    const rangeKey = generateRangeKey(newRange.start, newRange.end);
+    oldDecoration.dispose();
+    const newDecoration = vscode.window.createTextEditorDecorationType({
+        backgroundColor: color,
+    });
+    recorder.addFileRange(filePath, rangeKey, newRange, newDecoration, color);
+    recorder.removeFileRange(filePath, oldKey);
+};
+
 /**
  * Moves all highlight ranges by the length of the new range provided in the file filePath, if it should be updated.
  * @param changeEvent Change event that occurred
@@ -146,7 +157,8 @@ export let moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, fil
                         new vscode.Position(highlightRange.start.line, highlightRange.start.character),
                         new vscode.Position(highlightRange.end.line, range.start.character));
                     let rangeKey1 = generateRangeKey(rangeObj1.start, rangeObj1.end);
-
+                    
+                    // Need to fix highlight here.
                     let rangeObj2 = new vscode.Range(
                         new vscode.Position(highlightRange.start.line + diff, 0),
                         new vscode.Position(highlightRange.end.line + diff, highlightRange.end.character + length));
