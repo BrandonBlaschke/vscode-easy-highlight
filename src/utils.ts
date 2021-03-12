@@ -17,7 +17,7 @@ enum RelativePosition {
  * @param endPosition End position of the Range.
  * @returns Key that can be used to identify range in Recorder mapping.
  */ 
-export let generateRangeKey = (startPosition: vscode.Position, endPosition: vscode.Position): string  => {
+export const generateRangeKey = (startPosition: vscode.Position, endPosition: vscode.Position): string  => {
     return `${startPosition.line}${startPosition.character}${endPosition.line}${endPosition.character}`; 
 };
 
@@ -28,7 +28,7 @@ export let generateRangeKey = (startPosition: vscode.Position, endPosition: vsco
  * @returns 0 if position is behind the range, 1 if the position is in the range, 2 if the position
  * is ahead of the range.
  */
-let positionRelativeToRange = (position: vscode.Position, range: vscode.Range): RelativePosition => {
+const positionRelativeToRange = (position: vscode.Position, range: vscode.Range): RelativePosition => {
 
     // Check if behind
     if (position.line < range.start.line) {
@@ -56,7 +56,7 @@ let positionRelativeToRange = (position: vscode.Position, range: vscode.Range): 
  * @returns Object with two ranges newRange1 & newRange2 if a new Range was generated. If no Range was generated from
  * the given position then returns undefined.
  */
-export let modifyRange = (
+export const modifyRange = (
     startPosition: vscode.Position, 
     endPosition: vscode.Position, 
     range: vscode.Range, 
@@ -98,7 +98,7 @@ export let modifyRange = (
  * Get the color set in the JSON configuration.
  * @returns String that is formatted in hex color notation.
  */
-export let getConfigColor = (): string => {
+export const getConfigColor = (): string => {
 
 	// @ts-ignore Always returns string
     let color = vscode.workspace.getConfiguration().get("easy-highlight")["highlightColor"];
@@ -107,6 +107,15 @@ export let getConfigColor = (): string => {
     return DEFAULT_COLOR;
 };
 
+/**
+ * Updates the highlight decoration by removing it and adding the new one.
+ * @param newRange New Range for the new highlight
+ * @param oldDecoration Old decoration that needs to be removed
+ * @param filePath File path
+ * @param oldKey Old key used for the highlight
+ * @param color Color for the new highlight
+ * @param recorder Recorder Object
+ */
 const updateHighlight = (newRange: vscode.Range, oldDecoration: vscode.TextEditorDecorationType,
     filePath: string, oldKey:string, color: string, recorder: Recorder): void => {
     const rangeKey = generateRangeKey(newRange.start, newRange.end);
@@ -124,8 +133,8 @@ const updateHighlight = (newRange: vscode.Range, oldDecoration: vscode.TextEdito
  * @param filePath Path to the file that the new range is associated with.
  * @param recorder Recorder Object.
  */
-export let moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, filePath: string, recorder: Recorder): void => {
-    let rangeItems = recorder.getFileRanges(filePath);
+export const moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, filePath: string, recorder: Recorder): void => {
+    const rangeItems = recorder.getFileRanges(filePath);
 
     const startLine = changeEvent.range.start.line;
     const endLine = changeEvent.range.end.line;
@@ -134,16 +143,19 @@ export let moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, fil
     const diff = linesInserted - linesInRange;
     const range = changeEvent.range;
 
-    // TODO:
-    // Issue when highlight is on multiple ines and you type in it when the last line highlight was removed, kind of rare I think
+    // Current Issues with highlighter:
+    // Issue when highlight is on multiple lines and you type in it when the last line highlight was removed
     // selecting character and then typing a character moves highlight range by one when it shouldn't, rare case
+    // Making a new line then backspacing doesn't always revert back to the original highlight
+    // Issue when make new line on multiline highlight at start line
 
     for (let key in rangeItems) {
-        let highlightRange = rangeItems[key].range;
+        const highlightRange = rangeItems[key].range;
 
         // if added text within highlight on the end line increase highlight end character
-        if (range.isSingleLine && highlightRange.end.line === range.end.line && range.end.character < highlightRange.end.character) {
-            if ((highlightRange.isSingleLine && highlightRange.start.character < range.start.character) || !highlightRange.isSingleLine) {
+        if (highlightRange.end.line === range.end.line && range.end.character < highlightRange.end.character) {
+            // If making a newline on a single highlight line
+            if ((highlightRange.isSingleLine && highlightRange.start.character < range.start.character)) {
                 let length = 0;
                 if (changeEvent.rangeLength >= changeEvent.text.length || changeEvent.text === "") {
                     length = (changeEvent.rangeLength) * -1;
@@ -153,25 +165,26 @@ export let moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, fil
                 
                 // If new lines added within highlight
                 if (diff !== 0) {
-                    let rangeObj1 = new vscode.Range(
+                    const rangeObj1 = new vscode.Range(
                         new vscode.Position(highlightRange.start.line, highlightRange.start.character),
                         new vscode.Position(highlightRange.end.line, range.start.character));
-                    let rangeKey1 = generateRangeKey(rangeObj1.start, rangeObj1.end);
+                    const rangeKey1 = generateRangeKey(rangeObj1.start, rangeObj1.end);
+
+                    const textDiff = range.start.character - highlightRange.start.character;
                     
-                    // Need to fix highlight here.
-                    let rangeObj2 = new vscode.Range(
+                    const rangeObj2 = new vscode.Range(
                         new vscode.Position(highlightRange.start.line + diff, 0),
-                        new vscode.Position(highlightRange.end.line + diff, highlightRange.end.character + length));
-                    let rangeKey2 = generateRangeKey(rangeObj2.start, rangeObj2.end);
+                        new vscode.Position(highlightRange.end.line + diff, textDiff));
+                    const rangeKey2 = generateRangeKey(rangeObj2.start, rangeObj2.end);
 
                     // Add new range and remove the old range
                     rangeItems[key].decoration.dispose();
                     const decoration1 = vscode.window.createTextEditorDecorationType({
-                        backgroundColor: DEFAULT_COLOR,
+                        backgroundColor: rangeItems[key].color,
                     });
 
                     const decoration2 = vscode.window.createTextEditorDecorationType({
-                        backgroundColor: DEFAULT_COLOR,
+                        backgroundColor: rangeItems[key].color,
                     });
 
                     recorder.addFileRange(filePath, rangeKey1, rangeObj1, decoration1, rangeItems[key].color);
@@ -179,19 +192,12 @@ export let moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, fil
                     recorder.removeFileRange(filePath, key);
                     continue;
                 }
-
-                let rangeObj = new vscode.Range(
+                
+                // Update highlight range as typing text within highlight on the end line
+                const rangeObj = new vscode.Range(
                     new vscode.Position(highlightRange.start.line, highlightRange.start.character),
                     new vscode.Position(highlightRange.end.line, highlightRange.end.character + length));
-                let rangeKey = generateRangeKey(rangeObj.start, rangeObj.end);
-
-                // Add new range and remove the old range
-                rangeItems[key].decoration.dispose();
-                const decoration = vscode.window.createTextEditorDecorationType({
-                    backgroundColor: DEFAULT_COLOR,
-                });
-                recorder.addFileRange(filePath, rangeKey, rangeObj, decoration, rangeItems[key].color);
-                recorder.removeFileRange(filePath, key);
+                updateHighlight(rangeObj, rangeItems[key].decoration, filePath, key, rangeItems[key].color, recorder);
                 continue;
             }
         }
@@ -203,28 +209,17 @@ export let moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, fil
                 length = (changeEvent.rangeLength) * -1;
             } else {
                 // If no new lines added use text length, else set to 0 for just new lines
-                if (diff === 0) {
-                    length = changeEvent.text.length;                    
-                } else {
-                    length = 0;
-                }
+                length = diff === 0 ? changeEvent.text.length : 0;
             }
 
-            let rangeObj = new vscode.Range(
+            const rangeObj = new vscode.Range(
                 new vscode.Position(highlightRange.start.line + diff, highlightRange.start.character + length),
                 new vscode.Position(highlightRange.end.line + diff, highlightRange.end.character + length));
-            let rangeKey = generateRangeKey(rangeObj.start, rangeObj.end);
-            
-            // Add new range and remove the old range
-            rangeItems[key].decoration.dispose();
-            const decoration = vscode.window.createTextEditorDecorationType({
-                backgroundColor: DEFAULT_COLOR,
-            });
-            recorder.addFileRange(filePath, rangeKey, rangeObj, decoration, rangeItems[key].color);
-            recorder.removeFileRange(filePath, key);
+            updateHighlight(rangeObj, rangeItems[key].decoration, filePath, key, rangeItems[key].color, recorder);
             continue;
         }
-
+        
+        // NewLine checks
         if (range.start.line > highlightRange.end.line) {
             // Change is above highlight do nothing
             continue;
@@ -232,18 +227,25 @@ export let moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, fil
             // New line within highlight then remove completely 
             rangeItems[key].decoration.dispose();
             recorder.removeFileRange(filePath, key);
-        } else if (diff !== 0 && range.end.line <= highlightRange.start.line){
-            // TODO: Make this a helper function repeated code
-            let rangeObj = new vscode.Range(
+        } else if (diff !== 0 && range.end.line <= highlightRange.start.line && !(range.end.line === highlightRange.end.line && range.end.character > highlightRange.end.character)){
+            // If newline below or at highlight line, and its not after the highlight end character 
+            const rangeObj = new vscode.Range(
                 new vscode.Position(highlightRange.start.line + diff, highlightRange.start.character),
                 new vscode.Position(highlightRange.end.line + diff, highlightRange.end.character));
-            let rangeKey = generateRangeKey(rangeObj.start, rangeObj.end);
-            rangeItems[key].decoration.dispose();
-            const decoration = vscode.window.createTextEditorDecorationType({
-                backgroundColor: DEFAULT_COLOR,
-            });
-            recorder.addFileRange(filePath, rangeKey, rangeObj, decoration, rangeItems[key].color);
-            recorder.removeFileRange(filePath, key);
+            updateHighlight(rangeObj, rangeItems[key].decoration, filePath, key, rangeItems[key].color, recorder);
+        } else if (diff !== 0 && !highlightRange.isSingleLine && highlightRange.end.line > range.end.line && range.start.line >= highlightRange.start.line) {
+            // If newline added somewhere in multiline highlight
+            const rangeObj = new vscode.Range(
+                new vscode.Position(highlightRange.start.line, highlightRange.start.character),
+                new vscode.Position(highlightRange.end.line + diff, highlightRange.end.character));
+            updateHighlight(rangeObj, rangeItems[key].decoration, filePath, key, rangeItems[key].color, recorder);
+        } else if (diff !== 0 && !highlightRange.isSingleLine && highlightRange.end.line === range.end.line) {
+            // If new line added at end of multiline highlight
+            const textDiff = range.start.character - highlightRange.start.character;
+            const rangeObj = new vscode.Range(
+                new vscode.Position(highlightRange.start.line, highlightRange.start.character),
+                new vscode.Position(highlightRange.end.line + diff, textDiff));
+            updateHighlight(rangeObj, rangeItems[key].decoration, filePath, key, rangeItems[key].color, recorder);
         }
     }
 }
