@@ -11,15 +11,15 @@ suite('Extension Test Suite', () => {
 	test('Test generateRangeKey', () => {
 		// Different lines from start
 		let key = utils.generateRangeKey(new vscode.Position(0, 0), new vscode.Position(10, 0));
-		assert.equal(key, "00100");
+		assert.strictEqual(key, "00100");
 
 		// Same line in 100s
 		key = utils.generateRangeKey(new vscode.Position(110, 15), new vscode.Position(110, 17));
-		assert.equal(key, "1101511017");
+		assert.strictEqual(key, "1101511017");
 
 		// Both different line and character
 		key = utils.generateRangeKey(new vscode.Position(5, 5), new vscode.Position(6, 6));
-		assert.equal(key, "5566");
+		assert.strictEqual(key, "5566");
 	});
 
 	test('Test modifyRange with outside positions', () => {
@@ -112,15 +112,15 @@ suite('Extension Test Suite', () => {
 
 	test('Test Recorder getFileRange', () => {
 		let recorder = new Recorder();
-		assert.equal(recorder.getFileRange("file path", "range"), undefined);
+		assert.strictEqual(recorder.getFileRange("file path", "range"), undefined);
 		recorder.setFile("file path", {range: "range"});
-		assert.equal(recorder.getFileRange("file path", "range"), "range");
+		assert.strictEqual(recorder.getFileRange("file path", "range"), "range");
 	});
 
 	test('Test Recorder addFileRange', () => {
 		let recorder = new Recorder();
 		let range = new vscode.Range(new vscode.Position(0,0), new vscode.Position(1,0));
-		assert.equal(recorder.addFileRange("file path", "range", range, decoration, "color"), undefined);
+		assert.strictEqual(recorder.addFileRange("file path", "range", range, decoration, "color"), undefined);
 		recorder.setFile("file path", {range: "range"});
 		assert.ok(recorder.hasFileRange("file path", "range"));
 	});

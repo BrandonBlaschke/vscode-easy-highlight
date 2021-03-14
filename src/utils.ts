@@ -143,11 +143,12 @@ export const moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, f
     const diff = linesInserted - linesInRange;
     const range = changeEvent.range;
 
-    // Current Issues with highlighter:
+    // Current Issues with highlighter to be fixed:
     // Issue when highlight is on multiple lines and you type in it when the last line highlight was removed
     // selecting character and then typing a character moves highlight range by one when it shouldn't, rare case
-    // Making a new line then backspacing doesn't always revert back to the original highlight
+    // Making a new line then backspacing will remove a highlight
     // Issue when make new line on multiline highlight at start line
+    // Highlight that was on multiple lines will sometimes move the end highlight line. 
 
     for (let key in rangeItems) {
         const highlightRange = rangeItems[key].range;
@@ -164,7 +165,7 @@ export const moveRanges = (changeEvent: vscode.TextDocumentContentChangeEvent, f
                 }
                 
                 // If new lines added within highlight
-                if (diff !== 0) {
+                if (diff > 0) {
                     const rangeObj1 = new vscode.Range(
                         new vscode.Position(highlightRange.start.line, highlightRange.start.character),
                         new vscode.Position(highlightRange.end.line, range.start.character));

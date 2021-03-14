@@ -34,5 +34,11 @@ Update Background
 
 ### 1.2.0
 
-Fixed highlights not being updated when adding text to the document
+Highlights updated when new text is added or removed. 
+
+## Known Issues:
+- Selecting a single character and typing a single character reduces highlight range.
+- Newlines added or removed within highlight range causes unexpected behavior.
+- Multiline highlights end line will increase when typing.
+
 
