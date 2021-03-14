@@ -169,10 +169,16 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}, null, context.subscriptions);
 
-	// When editor switches text documents update ActiveEditor and decorations.
+	// When text is added to active editor update any highlights that should be moved up/down
 	vscode.workspace.onDidChangeTextDocument(event => {
 		if (activeEditor && event.document === activeEditor.document) {
-			updateDecorations(activeEditor);
+			const path = activeEditor.document.uri.path.toString();
+			
+			for (const change of event.contentChanges) {
+				utils.moveRanges(change, path, recorder);
+				updateDecorations(activeEditor);
+			}
+			
 		}
 	}, null, context.subscriptions);
 

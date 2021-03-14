@@ -28,3 +28,17 @@ This extension contributes the following settings:
 
 Initial release of Easy Highlight
 
+### 1.1.0
+
+Update Background
+
+### 1.2.0
+
+Highlights updated when new text is added or removed. 
+
+## Known Issues:
+- Selecting a single character and typing a single character reduces highlight range.
+- Newlines added or removed within highlight range causes unexpected behavior.
+- Multiline highlights end line will increase when typing.
+
+
