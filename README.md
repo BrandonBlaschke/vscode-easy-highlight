@@ -40,6 +40,10 @@ Highlights updated when new text is added or removed.
 
 Updated packages.
 
+### 1.3.1
+
+Fixed issue where duplicate highlight applied to the same range would not be able to be removed. Duplicate highlight does not happen on the same range, but will not cause issue when trying to remove highlight.
+
 ## Known Issues:
 - Selecting a single character and typing a single character reduces highlight range.
 - Newlines added or removed within highlight range causes unexpected behavior.

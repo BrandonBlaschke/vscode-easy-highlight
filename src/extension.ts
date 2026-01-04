@@ -47,10 +47,13 @@ export function activate(context: vscode.ExtensionContext) {
 		const decoration = vscode.window.createTextEditorDecorationType({
 			backgroundColor: color,
 		});
-
+		
+		// If already exists, delete the current one and add a new one incase the color is different.
 		if (recorder.hasFileRange(path, rangeKey)) {
 			let highlight = recorder.getFileRange(path, rangeKey)!;
-			highlight.decoration = decoration;
+			highlight?.decoration.dispose();
+			recorder.removeFileRange(path, rangeKey);
+			recorder.addFileRange(path, rangeKey, range, decoration, color);
 		} else {
 			recorder.addFileRange(path, rangeKey, range, decoration, color);
 		}
