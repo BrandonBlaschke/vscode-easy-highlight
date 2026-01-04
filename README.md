@@ -36,6 +36,10 @@ Update Background
 
 Highlights updated when new text is added or removed. 
 
+### 1.2.1
+
+Updated packages.
+
 ## Known Issues:
 - Selecting a single character and typing a single character reduces highlight range.
 - Newlines added or removed within highlight range causes unexpected behavior.

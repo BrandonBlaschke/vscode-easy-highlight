@@ -3,6 +3,7 @@
 	"displayName": "Easy Highlight",
 	"description": "Easily highlight lines of text",
 	"icon": "resources/icon.png",
+	"license": "MIT",
 	"galleryBanner": {
 		"color": "#ffffff",
 		"theme": "light"
@@ -13,7 +14,7 @@
 		"type": "git",
 		"url": "https://github.com/BrandonBlaschke/vscode-easy-highlight"
 	},
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"author": {
 		"name": "Brandon Blaschke"
 	},
@@ -77,6 +78,6 @@
 	},
 	"dependencies": {
 		"@types/validator": "^13.0.0",
-		"validator": "^13.7.0"
+		"validator": "^13.15.26"
 	}
 }
