@@ -77,6 +77,6 @@
 	},
 	"dependencies": {
 		"@types/validator": "^13.0.0",
-		"validator": "^13.0.0"
+		"validator": "^13.7.0"
 	}
 }
