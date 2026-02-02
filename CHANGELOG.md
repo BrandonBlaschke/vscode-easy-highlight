@@ -15,3 +15,15 @@ Update Background
 ### 1.2.0 February 28th 2021
 
 Fixed highlights not being updated when adding text to the document
+
+### 1.2.1
+
+Updated packages.
+
+### 1.3.1
+
+Fixed issue where duplicate highlight applied to the same range would not be able to be removed. Duplicate highlight does not happen on the same range, but will not cause issue when trying to remove highlight.
+
+### 1.4.0
+
+Added Highlight Color command.

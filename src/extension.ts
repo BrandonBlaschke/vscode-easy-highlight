@@ -61,6 +61,83 @@ export function activate(context: vscode.ExtensionContext) {
 		updateDecorations(activeEditor);
 	});
 
+	// Helper to create a colored circle icon
+	const createIcon = (color: string) => {
+		const baseColor = color.length > 7 ? color.substring(0, 7) : color;
+		const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="10" fill="${baseColor}" /></svg>`;
+		return vscode.Uri.parse(`data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`);
+	};
+
+	// Color palette with soft, highlight-friendly colors
+	const colorPalette = [
+		{ label: 'Yellow', description: 'Soft yellow highlight', color: '#fdff3240', iconPath: createIcon('#fdff3240') },
+		{ label: 'Orange', description: 'Soft orange highlight', color: '#ffa50040', iconPath: createIcon('#ffa50040') },
+		{ label: 'Pink', description: 'Soft pink highlight', color: '#ff69b440', iconPath: createIcon('#ff69b440') },
+		{ label: 'Red', description: 'Soft red highlight', color: '#ff6b6b40', iconPath: createIcon('#ff6b6b40') },
+		{ label: 'Green', description: 'Soft green highlight', color: '#90ee9040', iconPath: createIcon('#90ee9040') },
+		{ label: 'Cyan', description: 'Soft cyan highlight', color: '#00ced140', iconPath: createIcon('#00ced140') },
+		{ label: 'Blue', description: 'Soft blue highlight', color: '#87ceeb40', iconPath: createIcon('#87ceeb40') },
+		{ label: 'Purple', description: 'Soft purple highlight', color: '#dda0dd40', iconPath: createIcon('#dda0dd40') },
+		{ label: 'Lavender', description: 'Soft lavender highlight', color: '#e6e6fa40', iconPath: createIcon('#e6e6fa40') },
+		{ label: 'Mint', description: 'Soft mint highlight', color: '#98fb9840', iconPath: createIcon('#98fb9840') },
+		{ label: 'Peach', description: 'Soft peach highlight', color: '#ffdab940', iconPath: createIcon('#ffdab940') },
+		{ label: 'Coral', description: 'Soft coral highlight', color: '#f0808040', iconPath: createIcon('#f0808040') },
+	];
+
+	// Add highlight with custom color to the region the user selected.
+	let disposableHighlightColor = vscode.commands.registerCommand('easy-highlight.HighlightColor', async () => {
+		// Get current text editor that is open and their selection
+		activeEditor = vscode.window.activeTextEditor;
+		if (!activeEditor) {
+			return;
+		}
+
+		// Show color palette picker
+		const selectedColor = await vscode.window.showQuickPick(colorPalette, {
+			placeHolder: 'Select a highlight color',
+			matchOnDescription: true
+		});
+
+		if (!selectedColor) {
+			return; // User cancelled
+		}
+
+		// Get values from user
+		const path = activeEditor.document.uri.path.toString();
+		let start = activeEditor.selection.start;
+		let end = activeEditor.selection.end;
+
+		// Create range
+		let startPos = new vscode.Position(start.line, start.character);
+		let endPos = new vscode.Position(end.line, end.character);
+		let range = new vscode.Range(startPos, endPos);
+		
+		// Create range key
+		const rangeKey = utils.generateRangeKey(startPos, endPos);
+
+		if (!recorder.hasFile(path)) {
+			recorder.setFile(path, {});
+		}
+
+		const color = selectedColor.color;
+
+		const decoration = vscode.window.createTextEditorDecorationType({
+			backgroundColor: color,
+		});
+		
+		// If already exists, delete the current one and add a new one with the new color.
+		if (recorder.hasFileRange(path, rangeKey)) {
+			let highlight = recorder.getFileRange(path, rangeKey)!;
+			highlight?.decoration.dispose();
+			recorder.removeFileRange(path, rangeKey);
+			recorder.addFileRange(path, rangeKey, range, decoration, color);
+		} else {
+			recorder.addFileRange(path, rangeKey, range, decoration, color);
+		}
+
+		updateDecorations(activeEditor);
+	});
+
 	// Remove any highlights that the user selected within the region.
 	let disposableNoHighlight = vscode.commands.registerCommand("easy-highlight.RemoveHighlight", () => {
 
@@ -198,6 +275,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}, null, context.subscriptions);
 
 	context.subscriptions.push(disposable);
+	context.subscriptions.push(disposableHighlightColor);
 	context.subscriptions.push(disposableNoHighlight);
 	context.subscriptions.push(disposableRemoveAll);
 }

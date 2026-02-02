@@ -44,6 +44,10 @@ Updated packages.
 
 Fixed issue where duplicate highlight applied to the same range would not be able to be removed. Duplicate highlight does not happen on the same range, but will not cause issue when trying to remove highlight.
 
+### 1.4.0
+
+Added Highlight Color command.
+
 ## Known Issues:
 - Selecting a single character and typing a single character reduces highlight range.
 - Newlines added or removed within highlight range causes unexpected behavior.

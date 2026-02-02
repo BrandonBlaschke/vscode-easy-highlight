@@ -14,7 +14,7 @@
 		"type": "git",
 		"url": "https://github.com/BrandonBlaschke/vscode-easy-highlight"
 	},
-	"version": "1.3.1",
+	"version": "1.4.0",
 	"author": {
 		"name": "Brandon Blaschke"
 	},
@@ -43,6 +43,10 @@
 			{
 				"command": "easy-highlight.Highlight",
 				"title": "Highlight"
+			},
+			{
+				"command": "easy-highlight.HighlightColor",
+				"title": "Highlight Color"
 			},
 			{
 				"command": "easy-highlight.RemoveHighlight",
